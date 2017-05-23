@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Group Chat Board</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script
+	  src="http://code.jquery.com/jquery-3.2.1.min.js"
+	  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+	  crossorigin="anonymous"></script>
+</head>
+<body>
+	<!--title and then loggin info-->
+	<header class="container">
+		<h1>Lets all chat together!</h1>
+		<div class="row login-form">
+			<input type="text" id="username" placeholder="type in username">
+			<input type="password" id="password" placeholder="type in password">
+			<button class="btn btn-default" type="submit" id="login">Login</button>
+			<button class="btn btn-primary" type="submit" id="register">Register</button>
+			<div class="login-error"></div>
+		</div>
+	</header>
+	<section>
+	<!--messages section-->
+		<div class="container">
+			<div class="well" id="output"></div>
+			<div class="row">
+				<input type="text" id="chatmessage" placeholder="say something">
+				<button class="btn btn-success" id="sendChat">Speak</button>
+			</div>
+		</div>
+	</section>
+	<script type="text/javascript">
+		//click listeners
+		//post to log in.
+		$('#login').click(function() {
+			logIn();
+		});
+		//post new user
+		$('#register').click(function() {
+			register();
+		});
+		//post newchat to backend
+		$('#sendChat').click(function() {
+			sendChat();
+		});
+		//for hitting enter instead of click
+		$('#sendChat').keyup(function(event) {
+			if(event.keyCode === 13) {
+				sendChat();
+			}
+		});
+
+		//chat message functions
+		function logIn() {
+			$.post('/api/login', {
+				username: $('#username').val(),
+				password: $('#password').val()
+			}, function(res) {
+				if (res === 'error') {
+					$('.login-form').show();
+					$('.login-error').text('Error: Username or password incorrect. Click Register to register this user');
+				} else {
+					alert(res);
+					$('.login-form').hide();
+					getChats();
+				}
+			});
+		}
+		//registers user and logs user in. 
+		function register() {
+			$.post("/api/register", {
+				username: $('#username').val(),
+				password: $('#password').val()
+			}, function(res) {
+				if (res === 'success') {
+					$('.login-form').hide();
+					getChats();
+				} else {
+					//clears out login form and shows it just in-case. displays error message
+					$('.login-form').show();
+					$('#username').val('');
+					$('#password').val('');
+					$('.login-error').text("Error creating user profile, use a different username");
+					alert(res);
+				}
+			});
+		}
+		//how to get messages from backend
+		function getChats() {
+			$.ajax({
+				method: "GET",
+				url: "/api/chats",
+				success: function(chats) {
+					displayChats(chats);
+				},
+				error: function(err) {
+					//shouldn't ever run the way this code is written
+					alert("Sign in to Chat!");
+					$('.login-form').show();
+
+				}
+			});
+		}
+		//how to display messages from backend
+		function displayChats(chats) {
+			$("#output").empty();
+			for (var i = 0; i < chats.length; i++) {
+				$('#output').prepend("<h3>" + chats[i].submitterName + " Says: </h3> <p>" + chats[i].message + "</p>");
+			}
+		}
+		//how to send new message to backend
+		function sendChat() {
+			$.post("/api/newChat", {
+				message: $('#chatmessage').val()
+				}, function(res) {
+					if (res === 'error') {
+						alert('message not sent');
+						$('.login-form').show();
+					}
+					$('#chatmessage').val('');
+					console.log(res);//not really needed
+					getChats();
+			});
+		}
+	</script>
+</body>
+</html>

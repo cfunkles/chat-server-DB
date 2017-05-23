@@ -1,0 +1,1 @@
+Using the "Cookies and Sessions" example, as well as the "Ajax Examples - Chat Application", build a chat application with persistent mongo storage.
